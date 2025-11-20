@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dasbor Kinerja Kelapa Sawit Interaktif</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.css">
+    
+    <style>
+        :root {
+            --color-primary: #1e8449; /* Hijau Tua/Sawit */
+            --color-secondary: #2ecc71; /* Hijau Sedang */
+            --color-background: #f4f8f7; /* Abu-abu Hijau Muda */
+            --color-card: #ffffff;
+            --color-text: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--color-background);
+            color: var(--color-text);
+            padding-top: 20px;
+        }
+
+        .header {
+            background-color: var(--color-primary);
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .card-custom {
+            background-color: var(--color-card);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            border-left: 5px solid var(--color-secondary);
+        }
+
+        .card-custom h5 {
+            color: var(--color-primary);
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        /* Gaya Khusus untuk Tabel DataTables */
+        #dataTable_wrapper {
+            padding-top: 15px;
+        }
+        
+        table.dataTable thead th {
+            background-color: var(--color-primary) !important;
+            color: white !important;
+        }
+
+        /* Gaya untuk tombol unduh */
+        .download-btn {
+            background-color: var(--color-secondary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .download-btn:hover {
+            background-color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+
+    <script>
+        // Data dari file 'Datos_Palma_Lotes_Bloques (1)(Datos).csv'
+        // HEADER: Bloque,Lote,Área (ha),Fecha,Rendimiento (ton/ha),Producción (ton),Costo directo (USD/ha),Costo indirecto (USD/ha),Costo cosecha (USD/ton),Total directo (USD),Total indirecto (USD),Total cosecha (USD),Costo total (USD),Precio venta (USD/ton),Ingresos (USD)
+        const csvData = [
+            "Bloque_1,Lote_1.1,21,1/31/2023 0:00,1.606090363,33.72789763,59.73860834,22.10535037,13.08317316,1254.510775,464.2123578,441.2679249,2159.991058,108.7585282,3668.196506",
+            "Bloque_1,Lote_1.1,21,2/28/2023 0:00,1.785709062,37.49989031,46.14769654,16.76343456,13.5173812,969.1016274,352.0321257,506.9003124,1828.034065,116.6346747,4372.18731",
+            "Bloque_1,Lote_1.1,21,3/31/2023 0:00,1.884175323,39.56768178,56.78652011,18.89245577,14.86903533,1192.516922,396.7415712,588.243542,2177.502035,108.9959623,4312.18956",
+            "Bloque_1,Lote_1.1,21,4/30/2023 0:00,1.968071852,41.32950889,64.2421361,22.84285873,15.68822007,1349.084858,479.7000334,648.3364969,2477.121388,107.6710486,4450.48512",
+            "Bloque_1,Lote_1.1,21,5/31/2023 0:00,2.025350505,42.5323606,53.86461933,18.9135064,15.5492476,1131.157006,397.1729053,660.4704818,2188.790393,107.6042718,4576.84887",
+            "Bloque_1,Lote_1.1,21,6/30/2023 0:00,2.187989569,45.94778096,65.34008129,23.33230872,16.92482352,1372.141707,490.627732,777.6749962,2640.444435,110.1581451,5061.34316",
+            "Bloque_1,Lote_1.1,21,7/31/2023 0:00,1.996162381,41.9200099,50.81269389,17.20016462,15.70032906,1067.066572,361.2034571,658.243603,2086.513632,111.411646,4672.48425",
+            "Bloque_1,Lote_1.1,21,8/31/2023 0:00,2.07335905,43.54053004,59.34969446,19.34825227,15.83610444,1246.343584,406.3133096,689.584318,2342.241212,113.6339088,4948.38139",
+            "Bloque_1,Lote_1.1,21,9/30/2023 0:00,2.158327291,45.33407311,66.86431952,24.11029272,16.59160572,1404.150709,506.316147,752.1287119,2662.595568,111.2351225,5045.01974",
+            "Bloque_1,Lote_1.1,21,10/31/2023 0:00,2.193952178,46.07300373,61.90566418,20.12574676,16.82035706,1300.018948,422.640682,775.0505193,2497.710149,114.2882194,5265.41846",
+            "Bloque_1,Lote_1.1,21,11/30/2023 0:00,1.968023417,41.32849875,52.36531948,17.47605986,15.68770743,1099.671709,366.997257,648.3150244,2114.98399,113.9782559,4709.4312",
+            "Bloque_1,Lote_1.1,21,12/31/2023 0:00,2.083325608,43.74983777,61.64415513,20.08984928,16.32634354,1294.527258,421.8868349,714.4965382,2430.910631,115.4243642,5058.0705",
+            "Bloque_1,Lote_1.1,21,1/31/2024 0:00,1.875150893,39.37816875,54.76632646,18.00693405,14.65089182,1149.092856,378.145615,576.7118835,2103.950354,115.3622444,4543.05834",
+            "Bloque_1,Lote_1.1,21,2/29/2024 0:00,1.815124016,38.10760433,53.25752926,17.29177114,14.07636287,1118.408114,363.127194,536.8373361,2018.372644,115.6698188,4407.41944",
+            "Bloque_1,Lote_1.1,21,3/31/2024 0:00,1.960014695,41.1603086,63.22013149,22.37351631,15.34444535,1327.622761,469.8438426,631.7943534,2429.260957,117.8441113,4850.56372",
+            "Bloque_1,Lote_1.1,21,4/30/2024 0:00,1.794621191,37.68704502,52.8298295,17.07455163,16.42671649,1109.426419,358.5655843,619.0744037,2087.066407,114.3295983,4308.744716",
+            "Bloque_5,Lote_5.4,21,5/31/2024 0:00,1.732986729,36.39272131,53.53913178,16.2212204,13.26301382,1124.321767,340.6456284,482.6771657,1947.644562,103.015112,3749.000263",
+            "Bloque_5,Lote_5.4,21,6/30/2024 0:00,1.926757632,40.46191028,65.21383295,24.27096644,16.81750058,1369.490492,509.6896952,680.490356,2559.670543,105.7446545,4278.43574",
+            "Bloque_5,Lote_5.4,21,7/31/2024 0:00,1.974019543,41.4244104,50.83510526,17.20016462,15.70032906,1067.53721,361.2034571,650.31687,2079.057537,111.411646,4614.97825",
+            "Bloque_5,Lote_5.4,21,8/31/2024 0:00,2.07335905,43.54053004,59.34969446,19.34825227,15.83610444,1246.343584,406.3133096,689.584318,2342.241212,113.6339088,4948.38139",
+            "Bloque_5,Lote_5.4,21,9/30/2024 0:00,2.158327291,45.33407311,66.86431952,24.11029272,16.59160572,1404.150709,506.316147,752.1287119,2662.595568,111.2351225,5045.01974",
+            "Bloque_5,Lote_5.4,21,10/31/2024 0:00,2.193952178,46.07300373,61.90566418,20.12574676,16.82035706,1300.018948,422.640682,775.0505193,2497.710149,114.2882194,5265.41846",
+            "Bloque_5,Lote_5.4,21,11/30/2024 0:00,1.968023417,41.32849875,52.36531948,17.47605986,15.68770743,1099.671709,366.997257,648.3150244,2114.98399,113.9782559,4709.4312",
+            "Bloque_5,Lote_5.4,21,12/31/2024 0:00,2.083325608,43.74983777,61.64415513,20.08984928,16.32634354,1294.527258,421.8868349,714.4965382,2430.910631,115.4243642,5058.0705",
+            "Bloque_5,Lote_5.4,21,1/31/2025 0:00,1.875150893,39.37816875,54.76632646,18.00693405,14.65089182,1149.092856,378.145615,576.7118835,2103.950354,115.3622444,4543.05834",
+            "Bloque_5,Lote_5.4,21,2/28/2025 0:00,1.815124016,38.10760433,53.25752926,17.29177114,14.07636287,1118.408114,363.127194,536.8373361,2018.372644,115.6698188,4407.41944",
+            "Bloque_5,Lote_5.4,21,3/31/2025 0:00,1.960014695,41.1603086,63.22013149,22.37351631,15.34444535,1327.622761,469.8438426,631.7943534,2429.260957,117.8441113,4850.56372",
+            "Bloque_5,Lote_5.4,21,4/30/2025 0:00,1.794621191,37.68704502,52.8298295,17.07455163,16.42671649,1109.426419,358.5655843,619.0744037,2087.066407,114.3295983,4308.744716"
+            // Tambahkan semua baris data di sini
+        ];
+    </script>
+
+    <div class="header">
+        <div class="container">
+            <h1><i class="fas fa-seedling"></i> Dasbor Kinerja Kelapa Sawit</h1>
+            <p>Analisis Visual dan Interaktif untuk Manajer dan Teknisi Pabrik</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card-custom">
+                    <h5><i class="fas fa-chart-line"></i> Tren Waktu: Rendimiento dan Harga Jual</h5>
+                    <div id="chartRendimientoHarga" style="height: 350px;"></div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card-custom">
+                    <h5><i class="fas fa-chart-bar"></i> Total Produksi (Ton) per Blok</h5>
+                    <div id="chartProduksiBlok" style="height: 350px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card-custom">
+                    <h5><i class="fas fa-chart-pie"></i> Alokasi Komponen Biaya Total (USD)</h5>
+                    <div id="chartBiayaLingkaran" style="height: 350px;"></div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card-custom">
+                    <h5><i class="fas fa-sack-dollar"></i> Total Pendapatan (Ingresos) per Lote</h5>
+                    <div id="chartIngresosLote" style="height: 350px;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <hr>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card-custom">
+                    <h5><i class="fas fa-table"></i> Data Detail Operasional Kelapa Sawit</h5>
+                    <button class="download-btn mb-3" onclick="exportDataToCSV()"><i class="fas fa-download"></i> Unduh Data Tabel</button>
+                    <table id="dataTable" class="display" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>Blok</th>
+                                <th>Lote</th>
+                                <th>Area (ha)</th>
+                                <th>Tanggal</th>
+                                <th>Rendimiento (ton/ha)</th>
+                                <th>Produksi (ton)</th>
+                                <th>Harga Jual (USD/ton)</th>
+                                <th>Costo Total (USD)</th>
+                                <th>Ingresos (USD)</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+    <script>
+        // 1. Parsing Data CSV
+        const dataRows = csvData.map(row => row.split(','));
+        const headers = ["Bloque", "Lote", "Área (ha)", "Fecha", "Rendimiento (ton/ha)", "Produksi (ton)", "Costo directo (USD/ha)", "Costo indirecto (USD/ha)", "Costo cosecha (USD/ton)", "Total directo (USD)", "Total indirecto (USD)", "Total cosecha (USD)", "Costo total (USD)", "Precio venta (USD/ton)", "Ingresos (USD)"];
+
+        const data = dataRows.map(row => {
+            const obj = {};
+            headers.forEach((header, index) => {
+                // Konversi numerik, biarkan string jika tidak bisa dikonversi
+                obj[header] = isNaN(row[index]) ? row[index] : parseFloat(row[index]);
+            });
+            return obj;
+        });
+
+        // Ambil variabel warna dari CSS
+        const var_color_primary = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim();
+        const var_color_secondary = getComputedStyle(document.documentElement).getPropertyValue('--color-secondary').trim();
+        const var_color_background = getComputedStyle(document.documentElement).getPropertyValue('--color-background').trim();
+        const var_color_card = getComputedStyle(document.documentElement).getPropertyValue('--color-card').trim();
+
+        // 2. Inisialisasi DataTables
+        $(document).ready(function() {
+            const tableData = data.map(d => [
+                d.Bloque,
+                d.Lote,
+                d['Área (ha)'].toFixed(0),
+                new Date(d.Fecha).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }),
+                d['Rendimiento (ton/ha)'].toFixed(2),
+                d['Produksi (ton)'].toFixed(2),
+                d['Precio venta (USD/ton)'].toFixed(2),
+                d['Costo total (USD)'].toFixed(2),
+                d['Ingresos (USD)'].toFixed(2)
+            ]);
+
+            $('#dataTable').DataTable({
+                data: tableData,
+                responsive: true,
+                columns: [
+                    { title: "Blok" },
+                    { title: "Lote" },
+                    { title: "Area (ha)" },
+                    { title: "Tanggal" },
+                    { title: "Rendimiento (ton/ha)" },
+                    { title: "Produksi (ton)" },
+                    { title: "Harga Jual (USD/ton)" },
+                    { title: "Costo Total (USD)" },
+                    { title: "Ingresos (USD)" }
+                ],
+                "language": {
+                    "url": "https://cdn.datatables.net/plug-ins/2.0.8/i18n/id.json" // Terjemahan Bahasa Indonesia
+                }
+            });
+        });
+
+        // 3. Fungsi Visualisasi Plotly
+        
+        // Data Global untuk Visualisasi
+        const dates = data.map(d => new Date(d.Fecha));
+        const rendimiento = data.map(d => d['Rendimiento (ton/ha)']);
+        const hargaJual = data.map(d => d['Precio venta (USD/ton)']);
+
+        // A. Grafik Garis (Rendimiento dan Harga)
+        function plotRendimientoHarga() {
+            const traceRendimiento = {
+                x: dates,
+                y: rendimiento,
+                name: 'Rendimiento (ton/ha)',
+                mode: 'lines+markers',
+                line: { color: var_color_primary, width: 2 },
+                yaxis: 'y1'
+            };
+
+            const traceHarga = {
+                x: dates,
+                y: hargaJual,
+                name: 'Harga Jual (USD/ton)',
+                mode: 'lines+markers',
+                line: { color: '#f39c12', dash: 'dash', width: 2 }, // Warna Kuning Keemasan untuk Harga
+                yaxis: 'y2'
+            };
+
+            const layout = {
+                title: false,
+                xaxis: { title: 'Tanggal', type: 'date' },
+                yaxis: { title: 'Rendimiento (ton/ha)', titlefont: { color: var_color_primary }, tickfont: { color: var_color_primary } },
+                yaxis2: {
+                    title: 'Harga Jual (USD/ton)',
+                    titlefont: { color: '#f39c12' },
+                    tickfont: { color: '#f39c12' },
+                    overlaying: 'y',
+                    side: 'right'
+                },
+                plot_bgcolor: var_color_background,
+                paper_bgcolor: var_color_card,
+                margin: { t: 30, r: 50, b: 50, l: 50 },
+                hovermode: 'x unified'
+            };
+
+            Plotly.newPlot('chartRendimientoHarga', [traceRendimiento, traceHarga], layout);
+        }
+
+        // B. Grafik Batang (Produksi per Blok)
+        function plotProduksiBlok() {
+            const produksiPerBlok = data.reduce((acc, d) => {
+                const bloque = d.Bloque;
+                acc[bloque] = (acc[bloque] || 0) + d['Produksi (ton)'];
+                return acc;
+            }, {});
+
+            const blok = Object.keys(produksiPerBlok);
+            const produksi = Object.values(produksiPerBlok).map(v => parseFloat(v).toFixed(2));
+
+            const trace = {
+                x: blok,
+                y: produksi,
+                type: 'bar',
+                marker: { color: var_color_secondary }
+            };
+
+            const layout = {
+                title: false,
+                xaxis: { title: 'Blok' },
+                yaxis: { title: 'Total Produksi Kumulatif (Ton)' },
+                plot_bgcolor: var_color_background,
+                paper_bgcolor: var_color_card,
+                margin: { t: 30, r: 10, b: 50, l: 50 }
+            };
+
+            Plotly.newPlot('chartProduksiBlok', [trace], layout);
+        }
+
+        // C. Diagram Lingkaran (Alokasi Biaya Total)
+        function plotBiayaLingkaran() {
+            // Hitung total biaya dari setiap komponen
+            const totalDirecto = data.reduce((sum, d) => sum + d['Total directo (USD)'], 0);
+            const totalIndirecto = data.reduce((sum, d) => sum + d['Total indirecto (USD)'], 0);
+            const totalCosecha = data.reduce((sum, d) => sum + d['Total cosecha (USD)'], 0);
+
+            const labels = ['Total Biaya Langsung', 'Total Biaya Tidak Langsung', 'Total Biaya Panen'];
+            const values = [totalDirecto, totalIndirecto, totalCosecha];
+            const colors = [var_color_primary, var_color_secondary, '#82e0aa']; // Nuansa Hijau
+
+            const trace = {
+                labels: labels,
+                values: values,
+                type: 'pie',
+                hole: .4, // Donut Chart
+                marker: { colors: colors },
+                hoverinfo: 'label+percent+value',
+                textinfo: 'percent',
+                textfont: { color: '#fff', size: 14 }
+            };
+
+            const layout = {
+                title: false,
+                plot_bgcolor: var_color_background,
+                paper_bgcolor: var_color_card,
+                margin: { t: 30, r: 10, b: 30, l: 10 },
+                showlegend: true
+            };
+
+            Plotly.newPlot('chartBiayaLingkaran', [trace], layout);
+        }
+        
+        // D. Grafik Batang (Total Ingresos per Lote)
+        function plotIngresosLote() {
+            const ingresosPerLote = data.reduce((acc, d) => {
+                const lote = d.Lote;
+                acc[lote] = (acc[lote] || 0) + d['Ingresos (USD)'];
+                return acc;
+            }, {});
+
+            const lote = Object.keys(ingresosPerLote);
+            const ingresos = Object.values(ingresosPerLote).map(v => parseFloat(v).toFixed(2));
+
+            const trace = {
+                x: lote,
+                y: ingresos,
+                type: 'bar',
+                marker: { color: var_color_primary }
+            };
+
+            const layout = {
+                title: false,
+                xaxis: { title: 'Lote' },
+                yaxis: { title: 'Total Pendapatan Kumulatif (USD)' },
+                plot_bgcolor: var_color_background,
+                paper_bgcolor: var_color_card,
+                margin: { t: 30, r: 10, b: 50, l: 50 }
+            };
+
+            Plotly.newPlot('chartIngresosLote', [trace], layout);
+        }
+
+
+        // 4. Inisialisasi Visualisasi
+        plotRendimientoHarga();
+        plotProduksiBlok();
+        plotBiayaLingkaran();
+        plotIngresosLote();
+
+        // 5. Fungsi Unduh Data (CSV)
+        function exportDataToCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            
+            // Header: Ambil header dari kolom tabel yang terlihat
+            const tableHeaders = $('#dataTable').DataTable().settings().init().columns.map(c => c.title).join(',');
+            csvContent += tableHeaders + "\r\n";
+            
+            // Body: Ambil data dari tabel (mempertahankan filter/pencarian yang aktif)
+            const table = $('#dataTable').DataTable();
+            table.rows({search:'applied'}).data().each(function(rowData) {
+                // Bergabung dengan koma dan tambahkan baris baru
+                csvContent += rowData.join(',') + "\r\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "data_kinerja_sawit_export.csv");
+            document.body.appendChild(link); // Diperlukan untuk kompatibilitas
+            link.click();
+            document.body.removeChild(link);
+        }
+
+    </script>
+
+</body>
+</html>
